@@ -20,14 +20,14 @@ const mapDispatchToProps = dispatch => {
       loadCategories: () => {
           dispatch(loadCategoriesAjax())
       },
-      checkAnswer: (answer, questionId) => {
-          dispatch(check(answer, questionId))
+      checkAnswer: (answer, questionId, category) => {
+          dispatch(check(answer, questionId, category))
       },
       setTitle: (text) => {
           dispatch(setTitle(text))
       },
-      skipQuestion: (question) => {
-          dispatch(skip(question))
+      skipQuestion: (question, category) => {
+          dispatch(skip(question, category))
       }
     };
 };
@@ -47,7 +47,7 @@ class Quiz extends Component {
     checkAnswer = (event) => {
         event.preventDefault();
         if (this.state.answer.trim()) {
-            this.props.checkAnswer(this.state.answer, this.props.questionId);
+            this.props.checkAnswer(this.state.answer, this.props.questionId, this.state.category);
             this.setState({answer: ''})
         }
     };
@@ -61,8 +61,7 @@ class Quiz extends Component {
     };
     handleSkip = (event) => {
         event.preventDefault();
-        this.props.skipQuestion(this.props.questionId);
-        this.props.loadQuiz(this.state.category);
+        this.props.skipQuestion(this.props.questionId, this.state.category);
     };
 
     render() {

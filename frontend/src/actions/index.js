@@ -33,11 +33,11 @@ export const quizLoaded =  (data) => {
   }
 };
 
-export const check = (answer, question) => {
+export const check = (answer, question, category) => {
   return (dispatch) => {
     return axios.post(`${apiUrl}/answer/`, {answer, question})
       .then(response => {
-        dispatch(answerChecked(response.data))
+        dispatch(answerCheckedHandler(response.data, category))
       })
       .catch(error => {
         throw(error);
@@ -51,11 +51,11 @@ export const loading = () => {
   }
 };
 
-export const skip = (question) => {
+export const skip = (question, category) => {
   return (dispatch) => {
     return axios.post(`${apiUrl}/answer/get_answer/`, {question})
       .then(response => {
-        dispatch(skipped(response.data))
+        dispatch(skippedHandler(response.data, category))
       })
       .catch(error => {
         throw(error);
@@ -82,11 +82,27 @@ export const categoriesLoaded = (data) => {
   }
 };
 
-export const answerChecked = (data) => {
+export const answerCheckedHandler = (data, category) => {
+  const result = data.result === "OK";
+  return (dispatch) => {
+    if (result) {
+        dispatch(ask(category));
+    }
+    dispatch(answerChecked(result))
+  }
+};
 
+export const answerChecked = (result) => {
   return {
-    type: QUIZ_ANSWER,
-    right: data.result === "OK",
+      type: QUIZ_ANSWER,
+      right: result,
+  }
+};
+
+export const skippedHandler = (data, category) => {
+  return (dispatch) => {
+    dispatch(skipped(data));
+    dispatch(ask(category))
   }
 };
 
