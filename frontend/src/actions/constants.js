@@ -1,0 +1,6 @@
+export const QUIZ_LOADED = 'QUIZ_LOADED';
+export const QUIZ_ANSWER = 'QUIZ_ANSWER';
+export const CATEGORIES_LOADED = 'CATEGORIES_LOADED';
+export const QUESTION_SKIPPED = 'QUESTION_SKIPPED';
+export const SET_TITLE = 'SET_TITLE';
+export const LOADING = 'LOADING';

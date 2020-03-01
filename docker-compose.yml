@@ -1,0 +1,87 @@
+version: '3'
+
+# do not use it for production
+
+services:
+  postgres:
+    image: postgres:10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - beitris
+    ports:
+      - 5439:5432
+    environment:
+      - POSTGRES_DB=beitris
+      - POSTGRES_USER=beitris
+      - POSTGRES_PASSWORD=beitris
+
+  backend:
+    build: .
+    command: bash -c "python manage.py runserver 0.0.0.0:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - broker
+    networks:
+      - beitris
+
+  broker:
+    image: rabbitmq:3
+    networks:
+      - beitris
+    ports:
+      - 5672:5672
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbitmq
+      - RABBITMQ_DEFAULT_PASS=rabbitmq
+      - RABBITMQ_DEFAULT_VHOST=/
+
+  worker:
+    build: .
+    command: ["celery", "worker", "--app=beitris.celery.app", "--concurrency=1", "--hostname=worker@%h", "--loglevel=INFO"]
+    volumes:
+      - .:/app
+    networks:
+      - beitris
+    depends_on:
+      - broker
+
+  frontend:
+    build: ./frontend
+    environment:
+      - NODE_ENV=dev
+    depends_on:
+      - backend
+    networks:
+      - beitris
+    volumes:
+      - ./frontend:/app
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx.dev.Dockerfile
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ./media/:/app/media
+      - ./static/:/app/static
+      - /opt/letsencrypt/:/var/www/letsencrypt/
+      - /etc/letsencrypt/:/etc/letsencrypt/
+    links:
+      - frontend
+      - backend
+    ports:
+      - 80:80
+    networks:
+      - beitris
+
+volumes:
+  postgres_data:
+
+networks:
+  beitris:
+    driver: bridge

@@ -1,0 +1,73 @@
+version: '3'
+
+services:
+  postgres:
+    image: postgres:10
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - beitris
+    restart: always
+    environment:
+      - POSTGRES_DB=beitris
+      - POSTGRES_USER=beitris
+      - POSTGRES_PASSWORD=beitris
+
+  backend:
+    build: .
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - broker
+    networks:
+      - beitris
+    restart: always
+
+  broker:
+    image: rabbitmq:3
+    networks:
+      - beitris
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbitmq
+      - RABBITMQ_DEFAULT_PASS=rabbitmq
+      - RABBITMQ_DEFAULT_VHOST=/
+
+  worker:
+    build: .
+    command: ["celery", "worker", "--app=beitris.celery.app", "--concurrency=1", "--loglevel=INFO"]
+    volumes:
+      - .:/app
+    networks:
+      - beitris
+    depends_on:
+      - broker
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx.prod.Dockerfile
+    depends_on:
+      - backend
+    volumes:
+      - ./media/:/app/media
+      - ./static/:/app/static
+      - /opt/letsencrypt/:/var/www/letsencrypt/
+      - /etc/letsencrypt/:/etc/letsencrypt/
+    links:
+      - backend
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - beitris
+    restart: always
+
+volumes:
+  certbot-etc:
+  certbot-var:
+  postgres_data:
+
+networks:
+  beitris:
+    driver: bridge
