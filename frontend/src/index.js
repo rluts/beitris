@@ -8,9 +8,10 @@ import reducers from "./reducers";
 import ReduxThunk from 'redux-thunk';
 import {Provider} from "react-redux";
 
+const devMode = !process.env.NODE_ENV || process.env.NODE_ENV === 'development';
 
 const composeEnhancers =
-    typeof window === 'object' &&
+    typeof window === 'object' && devMode &&
       window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ ?
       window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__({}) : compose;
 
