@@ -27,16 +27,25 @@ services:
     networks:
       - beitris
 
+  daphne:
+    build: .
+    command: bash -c "daphne -b 0.0.0.0 -p 8001 beitris.asgi:application"
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - broker
+    ports:
+    - 8001:8001
+    networks:
+      - beitris
+
   broker:
-    image: rabbitmq:3
+    image: redis
     networks:
       - beitris
     ports:
-      - 5672:5672
-    environment:
-      - RABBITMQ_DEFAULT_USER=rabbitmq
-      - RABBITMQ_DEFAULT_PASS=rabbitmq
-      - RABBITMQ_DEFAULT_VHOST=/
+      - 6379:6379
 
   worker:
     build: .
@@ -50,6 +59,7 @@ services:
 
   frontend:
     build: ./frontend
+    command: bash -c 'yarn install && yarn start'
     environment:
       - NODE_ENV=dev
     depends_on:

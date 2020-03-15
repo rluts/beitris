@@ -1,17 +1,20 @@
 from django.http.response import Http404
-from rest_framework.generics import ListAPIView, CreateAPIView
-from rest_framework.response import Response
 from rest_framework.decorators import action
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.generics import ListAPIView, CreateAPIView
 from rest_framework.mixins import CreateModelMixin
+from rest_framework.response import Response
+from rest_framework.viewsets import GenericViewSet
 
 from common.converters.images import Image
 from common.exceptions import FileTypeError, NotFoundError
-from .models import Category, Question, Answer
-from .quiz import Quiz
-from .serializers import CategorySerializer, AnswerSerializer
+from game.game import Game
+from game.models import Answer, Room
+from quiz.models import Category
+from quiz.quiz import Quiz
+from quiz.serializers import CategorySerializer, AnswerSerializer
 
-ANONYMOUS_USER_ID = 1
+
+ANONYMOUS_USER_ID = 2
 SPA_ROOM_ID = 1
 BACKEND = 'api'
 
@@ -30,19 +33,16 @@ class AskView(CreateAPIView):
         category_id = request.data.get('category')
         if not category_id:
             raise Http404
-        quiz = Quiz(
-            initiator=ANONYMOUS_USER_ID,
-            category_id=category_id,
-            room_id=SPA_ROOM_ID,
-            backend=BACKEND
-        )
+        room, _ = Room.objects.get_or_create(id=SPA_ROOM_ID)
+        game = Game(ANONYMOUS_USER_ID, category_id, room)
+        quiz = Quiz(game_id=game.game_db_obj.id)
         response = quiz.ask_image_type()
         if not response:
             return Response({'error': 'Not configured'})
         img, answers, question_id, question = response
 
         try:
-            image = Image(img, quiz.room_id, question_id, convert_svg=False)
+            image = Image(img, game.room.id, question_id, convert_svg=False)
             image = str(image).split('/')[-1]
             return Response({
                 'url': f'/media/{image}',

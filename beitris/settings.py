@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'django_extensions',
 
     'common',
+    'game',
     'quiz'
 ]
 
@@ -83,7 +84,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'beitris.wsgi.application'
-
+ASGI_APPLICATION = 'beitris.routing.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.0/ref/settings/#databases
@@ -147,5 +148,18 @@ REST_FRAMEWORK = {
 
 # Celery
 
-CELERY_BROKER_URL = 'amqp://rabbitmq:rabbitmq@broker:5672'
+CELERY_BROKER_URL = 'redis://broker:6379/0'
 CELERY_RESULT_BACKEND = 'django-db'
+
+# Channels
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("broker", 6379)],
+        },
+    },
+}
+
+# Game settings
+COMMON_ROOM_ID = 1

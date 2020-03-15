@@ -7,6 +7,7 @@ from quiz.models import QuestionType
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+
 class Command(BaseCommand):
 
     def handle(self, *args, **options):

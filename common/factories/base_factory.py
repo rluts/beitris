@@ -18,16 +18,16 @@ class ObjectFactory:
     aliases = []
 
     def __init__(self, logger, filters=None, language=None, aliases=None,
-                 category_name=None):
+                 category_name=None, query=None):
         self.filters = filters or self.filters
         self.language = language or self.language
         self.aliases = aliases or self.aliases
         self.category_name = category_name or self.category_name
         logger.info("Started task ")
-        if not self.filters or not self.category_name:
+        if (not self.filters or not self.category_name) and not query:
             raise NotImplementedError('Set filters and category name')
         self.logger = logger
-        self.query = self.prepare_query()
+        self.query = query or self.prepare_query()
         self.data = self.load_data()
         self.client = None
 
@@ -65,7 +65,7 @@ class ObjectFactory:
     def save_data_to_db(self):
         self.logger.info('Starting to save data')
         self.client = Client()
-        category = Category.objects.create(name=self.category_name)
+        category = Category.objects.create(name=self.category_name, language=self.language)
         props = [self.client.get(alias, load=True) for alias in self.aliases]
         for obj in self.data:
             try:

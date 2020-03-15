@@ -5,5 +5,5 @@ from .tasks import run_factory
 
 
 @receiver(post_save, sender=Factory)
-def my_handler(sender, instance, **kwargs):
+def store_factory_data(sender, instance, **kwargs):
     run_factory.delay(instance.pk)

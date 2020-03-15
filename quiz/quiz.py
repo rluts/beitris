@@ -1,20 +1,18 @@
-import json
 from random import choice
 
 from django.db.models import Q, F
 from wikidata.client import Client
 
-from quiz.models import QuestionType, Object, ObjectAlias, Question
-from quiz.game import Game
+from quiz.models import QuestionType, Object
+from game.game import Game
+from game.models import Question
 
 
 class Quiz:
-    def __init__(self, initiator, category_id, room_id, backend):
-        self.room_id = room_id
-        self.game = Game.get_game(room_id, category_id) or Game(
-            initiator, category_id, room_id, backend)
+    def __init__(self, game_id):
+        self.game = Game.get_game(game_id)
         self.question_types = QuestionType.objects.filter(
-            category_id=category_id)
+            category=self.game.category)
         self.client = Client()
 
     @classmethod
@@ -56,7 +54,6 @@ class Quiz:
         answers.insert(0, obj.name)
         question = Question.objects.create(
             game=self.game.game_db_obj,
-            room_id=self.game.game_db_obj.room_id,
             right_answers=answers
         )
         return answers, question.id

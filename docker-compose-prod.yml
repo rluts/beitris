@@ -25,13 +25,20 @@ services:
     restart: always
 
   broker:
-    image: rabbitmq:3
+    image: redis
     networks:
       - beitris
-    environment:
-      - RABBITMQ_DEFAULT_USER=rabbitmq
-      - RABBITMQ_DEFAULT_PASS=rabbitmq
-      - RABBITMQ_DEFAULT_VHOST=/
+
+  daphne:
+    build: .
+    command: bash -c "daphne -b 0.0.0.0 -p 8001 beitris.asgi:application"
+    volumes:
+      - .:/app
+    depends_on:
+      - postgres
+      - broker
+    networks:
+      - beitris
 
   worker:
     build: .

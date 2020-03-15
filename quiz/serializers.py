@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from .models import Category, Answer
+from quiz.models import Category
+from game.models import Answer
 
 
 class CategorySerializer(serializers.ModelSerializer):

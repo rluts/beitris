@@ -18,11 +18,11 @@ def run_factory(factory_id):
         {'property': object_filter.property, 'entity': object_filter.entity}
         for object_filter in factory_db_obj.factoryfilter_set.all()]
     aliases = [alias.property for alias in factory_db_obj.alias_set.all()]
-    if not filters:
+    if not filters and not factory_db_obj.query:
         logger.error("Filters don't exists")
         return {'error': True, 'message': "Filters don't exists"}
     factory = ObjectFactory(
         logger, filters=filters, aliases=aliases,
         category_name=factory_db_obj.category_name,
-        language=factory_db_obj.language)
+        language=factory_db_obj.language, query=factory_db_obj.query)
     factory.save_data_to_db()

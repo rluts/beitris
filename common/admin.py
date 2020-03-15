@@ -16,7 +16,7 @@ class FacroryFilterAdmin(admin.TabularInline):
 
 
 class FactoryAdmin(admin.ModelAdmin):
-    fields = ('category_name', 'language')
+    fields = ('category_name', 'language', 'query')
     inlines = (FacroryAliasAdmin, FacroryFilterAdmin)
 
 

@@ -1,7 +1,7 @@
 from django.contrib import admin
-from .models import Question, QuestionType, Object, ObjectAlias, Category, Answer
+from .models import QuestionType, Object, ObjectAlias, Category
 
 
 admin.site.register(
-    [Question, QuestionType, Object, ObjectAlias, Category, Answer]
+    [QuestionType, Object, ObjectAlias, Category]
 )

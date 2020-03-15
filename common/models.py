@@ -1,7 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser
-
-# Create your models here.
+from django.db import models
 
 
 class User(AbstractUser):
@@ -16,6 +14,7 @@ class User(AbstractUser):
 
     external_id = models.BigIntegerField(null=True, blank=True)
     backend = models.CharField(null=True, blank=True, max_length=10)
+    default_language = models.CharField(max_length=3, default='en')
 
 
 class Factory(models.Model):
@@ -24,6 +23,8 @@ class Factory(models.Model):
 
     category_name = models.CharField(max_length=50)
     language = models.CharField(max_length=3, default='en')
+    query = models.TextField(null=True, blank=True,
+                             help_text='https://query.wikidata.org/')
 
     def __str__(self):
         return self.category_name

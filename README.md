@@ -1,5 +1,3 @@
-[![pipeline status](https://gitlab.com/beitris/beitris/badges/master/pipeline.svg)](https://gitlab.com/beitris/beitris/-/commits/master)
-
 Quiz app based on Wikidata factories
 
 https://beitris.com

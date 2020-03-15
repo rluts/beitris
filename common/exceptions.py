@@ -1,7 +1,10 @@
 class BeitrisError(Exception):
+    msg = 'Unknown error'
+    code = 500
+
     def __init__(self):
-        msg = getattr(self.__class__, 'msg', 'Unknown Error')
-        code = getattr(self.__class__, 'code', 500)
+        msg = getattr(self.__class__, 'msg')
+        code = getattr(self.__class__, 'code')
         super().__init__(code, msg)
 
 
@@ -15,6 +18,7 @@ class WikidataResultError(BeitrisError):
 
 class BackendDoesNotExist(BeitrisError):
     msg = 'Backend does not exist'
+    code = 404
 
 
 class FileTypeError(BeitrisError):
@@ -24,4 +28,14 @@ class FileTypeError(BeitrisError):
 
 class NotFoundError(BeitrisError):
     msg = 'File type not allowed'
+    code = 404
+
+
+class RoomPermissionsDenied(BeitrisError):
+    msg = "You don't have permissions to this room"
+    code = 403
+
+
+class RoomNotFound(BeitrisError):
+    msg = "Room does not exist"
     code = 404
