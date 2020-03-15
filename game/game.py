@@ -33,6 +33,10 @@ class Game:
             )
         )
 
+    @property
+    def participants(self):
+        return self.game_db_obj.participants.all()
+
     @classmethod
     def list_of_games(cls, user):
         game_filter = ((Q(room__creator=user) | Q(room__participants=user)) &

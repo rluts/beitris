@@ -19,8 +19,9 @@ class GameCostumer(AsyncJsonWebsocketConsumer, GameDBHandler, GameHelper):
         self.is_in_game = False
         self.game = None
         self.game_group_name = None
-        self.current_question = None
+        self.quiz = None
         self.current_timer_task = None
+        self.full_name = None
 
     async def connect(self):
         self.scope['user'] = await self.scope['user']
@@ -30,6 +31,7 @@ class GameCostumer(AsyncJsonWebsocketConsumer, GameDBHandler, GameHelper):
         else:
             logger.debug("user %s accepted" % self.scope['user'].username)
             await self.accept()
+            self.full_name = WSUserSerializer.get_full_name(self.scope['user'])
 
     async def receive_json(self, content, **kwargs):
         """
@@ -53,12 +55,43 @@ class GameCostumer(AsyncJsonWebsocketConsumer, GameDBHandler, GameHelper):
         elif command == 'check_answer':
             pass
         elif command == 'skip':
-            await self.cancel_timer()
+            await self.request_for_skip()
         elif command == 'message':
             await self.chat_message(params.get('message'))
 
     async def request_for_skip(self):
-        await self.cancel_timer()
+        if self.quiz:
+            response = await self.handle_request_for_skip(self.scope['user'])
+            participants = response['participants']
+            skip_requests = response['skip_requests']
+            if participants - skip_requests == 0:
+                msg = 'Question skipped, loading next quiz.'
+                await self.warning_message(msg)
+                await self.cancel_timer()
+                await self.next_quiz()
+            else:
+                msg = (f'{self.full_name}: pass. {skip_requests}/{participants}'
+                       f' want to skip this question.')
+                await self.warning_message(msg)
+
+    async def disconnect(self, code):
+        await self.leave_game()
+
+    async def next_quiz(self):
+        answer = await self.handle_get_answer()
+        msg = f'Right answer: {answer}'
+        await self.info_message(msg)
+        await self.start_quiz()
+
+    async def info_message(self, message):
+        await self.send_game_message(
+            message=message,
+            message_type=MessageTypes.info.value)
+
+    async def warning_message(self, message):
+        await self.send_game_message(
+            message=message,
+            message_type=MessageTypes.warning.value)
 
     async def chat_message(self, message):
         await self.send_game_message(
@@ -68,15 +101,16 @@ class GameCostumer(AsyncJsonWebsocketConsumer, GameDBHandler, GameHelper):
 
     async def start_game(self):
         if self.game:
-            self.game.start_game()
+            await self.handle_start_game()
             await self.send_game_event('game_started')
             await self.start_quiz()
 
-    async def timer(self):
+    async def quiz_timer(self):
         for i in range(20):
             await asyncio.sleep(1)
-            await self.send_json({'time': 20 - i})
-        await self.send_json(['finished'])
+            await self.send_game_event({'time': 20 - i})
+            # TODO: check threads
+        await self.next_quiz()
 
     async def cancel_timer(self):
         if self.current_timer_task and not self.current_timer_task.cancelled():
@@ -85,9 +119,13 @@ class GameCostumer(AsyncJsonWebsocketConsumer, GameDBHandler, GameHelper):
     async def start_quiz(self):
         if self.game and not self.game.game_db_obj.finished:
             response = await self.handle_ask()
+            if response.get('error'):
+                logger.error(f'Error {response["code"]}: {response["error"]}')
+                return await self.start_quiz()
             await self.send_game_event(response)
             loop = asyncio.get_event_loop()
-            self.current_timer_task = loop.create_task(self.timer())
+            self.current_timer_task = loop.create_task(self.quiz_timer())
+            self.current_timer_task.get_name()
         else:
             await self.send_json({'response': 'game_finished'})
 
@@ -121,26 +159,24 @@ class GameCostumer(AsyncJsonWebsocketConsumer, GameDBHandler, GameHelper):
                 "sign": sign
             })
 
+    async def join_to_game_group(self):
+        self.game_group_name = f'game{self.game.game_db_obj.id}'
+        await self.channel_layer.group_add(self.game_group_name,
+                                           self.channel_name)
+
     async def join_game(self, game):
         await self.leave_game()
         self.is_in_game = True
-        self.game_group_name = f'game{game}'
-        self.game = await self.handle_get_and_join_game(game)
-        await self.channel_layer.group_add(self.game_group_name,
-                                           self.channel_name)
-        full_name = WSUserSerializer.get_full_name(self.scope['user'])
-        message = f"{full_name} joined the game"
-        await self.send_game_message(
-            message=message,
-            message_type=MessageTypes.info.value)
-        await self.send_json({'result': 'success'})
+        self.game = await self.handle_get_and_join_game(
+            game, self.scope['user'])
+        await self.join_to_game_group()
+        message = f"{self.full_name} joined the game"
+        await self.info_message(message)
 
     async def leave_game(self):
+        await self.handle_leave_game(self.scope['user'])
+        await self.info_message(f"{self.full_name} left the game")
         self.is_in_game = False
         self.game = None
         self.game_group_name = None
         self.channel_layer.flush()
-
-
-
-

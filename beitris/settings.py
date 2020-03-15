@@ -157,9 +157,10 @@ CHANNEL_LAYERS = {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
             "hosts": [("broker", 6379)],
+            'capacity': 500,
+            'expiry': 20,
         },
     },
 }
-
 # Game settings
 COMMON_ROOM_ID = 1

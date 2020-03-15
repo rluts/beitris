@@ -39,3 +39,8 @@ class RoomPermissionsDenied(BeitrisError):
 class RoomNotFound(BeitrisError):
     msg = "Room does not exist"
     code = 404
+
+
+class GamePermissionsDenied(BeitrisError):
+    msg = "You don't have permission to this game"
+    code = 403

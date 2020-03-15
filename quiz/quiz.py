@@ -3,9 +3,10 @@ from random import choice
 from django.db.models import Q, F
 from wikidata.client import Client
 
-from quiz.models import QuestionType, Object
+from common.exceptions import GamePermissionsDenied
 from game.game import Game
 from game.models import Question
+from quiz.models import QuestionType, Object
 
 
 class Quiz:
@@ -13,6 +14,7 @@ class Quiz:
         self.game = Game.get_game(game_id)
         self.question_types = QuestionType.objects.filter(
             category=self.game.category)
+        self.current_question = None
         self.client = Client()
 
     @classmethod
@@ -45,6 +47,19 @@ class Quiz:
         if queryset.exists():
             return choice(queryset)
 
+    def skip_request(self, user):
+        if not self.current_question:
+            raise ValueError('Question does not exist')
+        participants = self.game.participants
+        if user in participants:
+            self.current_question.skip_request.add(user)
+        else:
+            raise GamePermissionsDenied()
+        return {
+            'participants': len(participants),
+            'skip_requests': self.current_question.skip_request.count()
+        }
+
     @staticmethod
     def get_aliases(obj):
         return list(obj.aliases.all().values_list('name', flat=True))
@@ -56,6 +71,7 @@ class Quiz:
             game=self.game.game_db_obj,
             right_answers=answers
         )
+        self.current_question = question
         return answers, question.id
 
     def get_image_url_from_object(self, obj, question_type):
