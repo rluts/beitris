@@ -14,7 +14,6 @@ class Quiz:
         self.game = Game.get_game(game_id)
         self.question_types = QuestionType.objects.filter(
             category=self.game.category)
-        # self.current_question = self.game.game_db_obj.current_question
         self.client = Client()
 
     @property
@@ -31,7 +30,8 @@ class Quiz:
 
     @property
     def response(self):
-        return self.current_question.response_json
+        if current_question := self.current_question:
+            return current_question.response_json
 
     @response.setter
     def response(self, value):

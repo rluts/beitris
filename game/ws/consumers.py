@@ -26,8 +26,10 @@ class GameConsumer(BaseConsumer):
 
     @command
     async def message(self, data):
-        if message := data.get('message'):
-            await self.send_group_message(self.game_id, 'message', {'message': message})
+        if (message := data.get('message')) and self.game:
+            await self.send_group_message(
+                self.game_id, 'message',
+                {'message': message, 'user': await self.helpers.get_serialized_user()})
 
     @command
     async def create_game(self, data):
@@ -47,8 +49,8 @@ class GameConsumer(BaseConsumer):
         if game_id and isinstance(game_id, int):
             self.game = await self.helpers.get_and_join_game(game_id, self.scope['user'])
             self.current_quiz = await self.helpers.get_quiz(self.game)
-            await self.response_message(
-                'question', await self.helpers.get_response(self.current_quiz))
+            if last_message := await self.helpers.get_response(self.current_quiz):
+                await self.response_message('question', last_message)
             await self.channel_layer.group_add(self.game_id, self.channel_name)
             await self.send_group_message(self.game_id, 'user_joined',
                                           await self.helpers.get_serialized_user())
