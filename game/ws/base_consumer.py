@@ -1,9 +1,12 @@
 import logging
+import re
 
 from channels.db import database_sync_to_async
+from channels.exceptions import StopConsumer, AcceptConnection
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
-from .exceptions import ForceDisconnect, WebsocketErrors
+from common.exceptions import BeitrisError
+from .exceptions import ForceDisconnect, WebsocketErrors, UnexpectedCommand, ParamsRequired
 from .serializers import ReceivedDataSerializer
 
 logger = logging.getLogger(__name__)
@@ -85,6 +88,16 @@ class BaseConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json({'error': {'type': error_type, 'message': message, 'code': code}})
         return code
 
+    @staticmethod
+    def _underscope(s):
+        return '_'.join(map(lambda x: x.lower(), re.findall(r'[A-Z][a-z0-9]*', s)))
+
+    async def error_handler(self, error):
+        t = self._underscope(error.__class__.__name__)
+        message = error.msg
+        code = error.code
+        await self.send_json({'error': {'type': t, 'message': message, 'code': code}})
+
     async def connect(self):
         helper_class = self.get_helper_class()
         if self.scope['user'].is_anonymous:
@@ -120,12 +133,12 @@ class BaseConsumer(AsyncJsonWebsocketConsumer):
                 try:
                     await getattr(self, serializer.validated_data['command'])()
                 except TypeError as ex:
-                    if "missing 1 required positional argument: 'data'" in ex.args[0]:
-                        await self.error(WebsocketErrors.ERROR_3003)
+                    if "missing 1 required positional argument: 'params'" in ex.args[0]:
+                        raise ParamsRequired
                     else:
                         raise ex
         else:
-            await self.error(WebsocketErrors.ERROR_3002)
+            raise UnexpectedCommand
 
     async def force_disconnect(self, event):
         raise ForceDisconnect()
@@ -146,6 +159,12 @@ class BaseConsumer(AsyncJsonWebsocketConsumer):
         message = event.get('message')
         if data and message:
             await self.send_json({'message': message, 'data': data})
+
+    async def dispatch(self, message):
+        try:
+            await super(BaseConsumer, self).dispatch(message)
+        except BeitrisError as ex:
+            await self.error_handler(ex)
 
     async def __call__(self, receive, send):
         try:

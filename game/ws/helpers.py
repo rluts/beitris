@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from channels.db import database_sync_to_async
@@ -6,7 +7,8 @@ from common.converters.images import Image
 from common.enums import Backends
 from common.exceptions import BeitrisError
 from game.game import Game
-from game.models import Room
+from game.models import Room, Answer
+from game.ws.exceptions import GameFinished, AlreadyJoined, GameNotJoined
 from game.ws.serializers import WSUserSerializer, WSCategorySerializer, WSGameSerializer
 from quiz.models import Category
 from quiz.quiz import Quiz
@@ -26,12 +28,18 @@ class GameHelper:
         return serializer.data
 
     @database_sync_to_async
-    def get_serialized_user(self):
+    def get_serialized_user(self, user=None):
+        if not user:
+            user = self.user
         return WSUserSerializer(self.user).data
 
     @database_sync_to_async
     def get_and_join_game(self, game, user):
         game = Game.get_game(game)
+        if game.game_db_obj.finished:
+            raise GameFinished
+        if self.user in game.participants:
+            raise AlreadyJoined
         game.join(user)
         return game
 
@@ -56,8 +64,8 @@ class GameHelper:
         return serializer.data
 
     @database_sync_to_async
-    def get_quiz(self, game, current_question=None):
-        return Quiz(game.game_db_obj.id, current_question=current_question)
+    def get_quiz(self, game):
+        return Quiz(game.game_db_obj.id)
 
     @database_sync_to_async
     def ask(self, game):
@@ -68,6 +76,7 @@ class GameHelper:
         if not response:
             return
         img, answers, question_id, question = response
+        quiz.current_question = question
         try:
             image = Image(
                 img,
@@ -75,15 +84,20 @@ class GameHelper:
                 question_id,
                 convert_svg=False)
             image = str(image).split('/')[-1]
-            return quiz, {'response': {
+            response = {
                 'url': f'/media/{image}',
                 'question_id': question_id,
                 'question': question
-            }}
-        except BeitrisError as e:
-            return self.ask(game)
-        except AttributeError:
-            return self.ask(game)
+            }
+            quiz.response = response
+            return quiz, response
+        except (BeitrisError, AttributeError):
+            loop = asyncio.new_event_loop()
+            return loop.run_until_complete(self.ask(game))
+
+    @database_sync_to_async
+    def get_response(self, quiz):
+        return quiz.response
 
     @database_sync_to_async
     def start_game(self, game):
@@ -94,8 +108,25 @@ class GameHelper:
         return quiz.is_skipped()
 
     @database_sync_to_async
+    def is_answered(self, quiz):
+        if answer := Answer.objects.filter(question=quiz.current_question, right=True).first():
+            return answer.user, next(iter(quiz.current_question.right_answers), None)
+
+    @database_sync_to_async
     def request_for_skip(self, quiz):
         return quiz.skip_request(self.user)
+
+    @database_sync_to_async
+    def check_answer(self, quiz, answer):
+        if not quiz:
+            raise GameNotJoined
+        if answer.strip() in quiz.current_question.right_answers:
+            right = True
+        else:
+            right = False
+        Answer.objects.create(
+            question=quiz.current_question, user=self.user, answer=answer, right=bool(right))
+        return right
 
     @database_sync_to_async
     def get_answer(self, quiz):

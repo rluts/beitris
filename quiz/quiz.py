@@ -10,14 +10,33 @@ from quiz.models import QuestionType, Object
 
 
 class Quiz:
-    def __init__(self, game_id, current_question=None):
+    def __init__(self, game_id):
         self.game = Game.get_game(game_id)
         self.question_types = QuestionType.objects.filter(
             category=self.game.category)
-        if isinstance(current_question, int):
-            current_question = Question.objects.filter(id=current_question).first()
-        self.current_question = current_question
+        # self.current_question = self.game.game_db_obj.current_question
         self.client = Client()
+
+    @property
+    def current_question(self):
+        return self.game.game_db_obj.current_question
+
+    @current_question.setter
+    def current_question(self, value):
+        if isinstance(value, Question):
+            self.game.game_db_obj.current_question = value
+        elif isinstance(value, int):
+            self.game.game_db_obj.current_question_id = value
+        self.game.game_db_obj.save()
+
+    @property
+    def response(self):
+        return self.current_question.response_json
+
+    @response.setter
+    def response(self, value):
+        self.current_question.response_json = value
+        self.current_question.save()
 
     @classmethod
     def parse_answers(cls, obj):

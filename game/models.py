@@ -54,6 +54,7 @@ class GameTable(models.Model):
     category = models.ForeignKey('quiz.Category', on_delete=models.CASCADE)
     room = models.ForeignKey(Room, on_delete=models.CASCADE,
                              related_name='games')
+    current_question = models.ForeignKey('Question', on_delete=models.SET_NULL, null=True)
     created_time = models.DateTimeField(auto_now_add=True)
     started = models.BooleanField(default=False)
     finished = models.BooleanField(default=False)
@@ -79,6 +80,7 @@ class Question(models.Model):
     associated_user = models.ForeignKey(User, on_delete=models.SET_NULL,
                                         null=True, blank=True)
     skip_request = models.ManyToManyField(User, related_name='skip_question')
+    response_json = JSONField(null=True, blank=True)
 
     def __str__(self):
         return f'Question #{self.pk} (game {self.game_id})'
@@ -88,6 +90,7 @@ class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.CASCADE, null=True,
                              blank=True)
+    answer = models.CharField(max_length=255)
     right = models.BooleanField(default=False)
 
     def __str__(self):
