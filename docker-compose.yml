@@ -23,7 +23,7 @@ services:
       - .:/app
     depends_on:
       - postgres
-      - broker
+      - redis
     networks:
       - beitris
 
@@ -34,20 +34,30 @@ services:
       - .:/app
     depends_on:
       - postgres
-      - broker
+      - redis
     ports:
     - 8001:8001
     networks:
       - beitris
 
-  broker:
+  channels:
+    build: .
+    command: ["python", "manage.py", "runworker", "websocket"]
+    volumes:
+      - .:/app
+    networks:
+      - beitris
+    depends_on:
+      - redis
+
+  redis:
     image: redis
     networks:
       - beitris
     ports:
       - 6379:6379
 
-  worker:
+  celery:
     build: .
     command: ["celery", "worker", "--app=beitris.celery.app", "--concurrency=1", "--hostname=worker@%h", "--loglevel=INFO"]
     volumes:
@@ -55,7 +65,7 @@ services:
     networks:
       - beitris
     depends_on:
-      - broker
+      - redis
 
   frontend:
     build: ./frontend

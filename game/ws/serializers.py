@@ -19,11 +19,11 @@ class WSUserSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_full_name(obj):
-        return f'{obj.first_name} {obj.last_name}'
+        return obj.get_full_name()
 
     class Meta:
         model = User
-        fields = ('id', 'full_name')
+        fields = ('id', 'full_name', 'is_online')
 
 
 class WSGameSerializer(serializers.ModelSerializer):
@@ -33,6 +33,10 @@ class WSGameSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GameTable
-        fields = ('id', 'room_id', 'initiator', 'participants', 'category',
-                  'started')
+        fields = ('id', 'room_id', 'initiator', 'participants', 'category', 'created_time',
+                  'started', 'start_time', 'finished')
 
+
+class ReceivedDataSerializer(serializers.Serializer):
+    command = serializers.CharField()
+    params = serializers.JSONField(required=False)

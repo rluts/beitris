@@ -6,7 +6,7 @@ import {
 } from './constants';
 import axios from 'axios';
 
-const apiUrl = '/api';
+const apiUrl = 'http://127.0.0.1:8000/api';
 
 export const ask = (category) => {
   return (dispatch) => {
@@ -28,7 +28,7 @@ export const quizLoaded =  (data) => {
   return {
     type: QUIZ_LOADED,
     question: data.question,
-    imageUrl: data.url,
+    imageUrl: 'http://127.0.0.1:8000' + data.url,
     questionId: data.question_id
   }
 };

@@ -32,6 +32,7 @@ class Game:
                 initiator=initiator
             )
         )
+        self.join(initiator)
 
     @property
     def participants(self):
@@ -41,7 +42,13 @@ class Game:
     def list_of_games(cls, user):
         game_filter = ((Q(room__creator=user) | Q(room__participants=user)) &
                        Q(finished=False))
-        return GameTable.objects.filter(game_filter)
+        games = GameTable.objects.filter(game_filter)
+
+    @classmethod
+    def list_of_public_games(cls):
+        # TODO: add language support
+        GameTable.objects.filter(finished=False, participants__is_online=None).update(finished=True)
+        return GameTable.objects.filter(finished=False)
 
     def join(self, user):
         self.game_db_obj.participants.add(user)
@@ -49,7 +56,7 @@ class Game:
     @classmethod
     def get_game(cls, game_id):
         game_db_obj = GameTable.objects.get(id=game_id)
-        return cls(game_db_obj.initiator_id, game_db_obj.category_id,
+        return cls(game_db_obj.initiator, game_db_obj.category_id,
                    game_db_obj.room_id, game_db_obj)
 
     def get_or_create_user(self, user_obj):
@@ -80,6 +87,7 @@ class Game:
     def _setattr(self, key, value):
         setattr(self, key, value)
         setattr(self.game_db_obj, key, value)
+        self.game_db_obj.save()
 
     def start_game(self):
         self._setattr('started', True)

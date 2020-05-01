@@ -10,11 +10,13 @@ from quiz.models import QuestionType, Object
 
 
 class Quiz:
-    def __init__(self, game_id):
+    def __init__(self, game_id, current_question=None):
         self.game = Game.get_game(game_id)
         self.question_types = QuestionType.objects.filter(
             category=self.game.category)
-        self.current_question = None
+        if isinstance(current_question, int):
+            current_question = Question.objects.filter(id=current_question).first()
+        self.current_question = current_question
         self.client = Client()
 
     @classmethod
@@ -59,6 +61,11 @@ class Quiz:
             'participants': len(participants),
             'skip_requests': self.current_question.skip_request.count()
         }
+
+    def is_skipped(self):
+        participants = self.game.participants.count()
+        skip_requests = self.current_question.skip_request.count()
+        return participants <= skip_requests
 
     @staticmethod
     def get_aliases(obj):

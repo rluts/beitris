@@ -54,7 +54,7 @@ class ObjectFactory:
             sparql.setReturnFormat(JSON)
             results = sparql.query().convert()
             self.logger.info('Data loaded')
-        except (HTTPError, EndPointInternalError) as e:
+        except (HTTPError, EndPointInternalError):
             raise WikidataSparQLError
 
         try:
@@ -84,8 +84,8 @@ class ObjectFactory:
             aliases = []
 
             for alias in wikidata_obj.attributes['aliases'][self.language]:
-                self.logger.info(f"{alias['value']} found. Saving to db")
-                if alias.get('value') and re.match('\w+', alias['value']):
+                if alias.get('value') and re.match(r'\w+', alias['value']):
+                    self.logger.info(f"{alias['value']} found. Saving to db")
                     aliases.append(ObjectAlias(name=alias['value'],
                                                object_id=db_obj.id))
         except Exception as e:
@@ -97,9 +97,9 @@ class ObjectFactory:
         try:
             for prop in props:
                 alias = wikidata_obj.get(prop)
-                if alias:
+                if alias and getattr(alias, 'label', None) and alias.get(self.language):
                     self.logger.info(f"Alias {alias.label[self.language]} found."
-                                f" Saving to db")
+                                     f" Saving to db")
                     aliases.append(ObjectAlias(name=alias.label[self.language],
                                                object_id=db_obj.id))
         except Exception as e:

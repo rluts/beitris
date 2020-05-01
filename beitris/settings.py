@@ -45,9 +45,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'rest_framework',
     'rest_framework.authtoken',
     'django_celery_results',
     'django_extensions',
+    'channels',
+    'corsheaders',
 
     'common',
     'game',
@@ -57,6 +60,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -135,7 +139,8 @@ USE_TZ = True
 
 STATIC_URL = '/backend/assets/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
-
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = 'media/'
 
 # Rest Framework
 
@@ -148,7 +153,7 @@ REST_FRAMEWORK = {
 
 # Celery
 
-CELERY_BROKER_URL = 'redis://broker:6379/0'
+CELERY_BROKER_URL = f"redis://{env('REDIS_HOST')}:{env('REDIS_PORT')}/0"
 CELERY_RESULT_BACKEND = 'django-db'
 
 # Channels
@@ -156,7 +161,7 @@ CHANNEL_LAYERS = {
     "default": {
         "BACKEND": "channels_redis.core.RedisChannelLayer",
         "CONFIG": {
-            "hosts": [("broker", 6379)],
+            "hosts": [(env('REDIS_HOST'), env.int('REDIS_PORT'))],
             'capacity': 500,
             'expiry': 20,
         },
@@ -164,3 +169,8 @@ CHANNEL_LAYERS = {
 }
 # Game settings
 COMMON_ROOM_ID = 1
+
+CORS_ORIGIN_WHITELIST = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+]

@@ -15,6 +15,11 @@ class User(AbstractUser):
     external_id = models.BigIntegerField(null=True, blank=True)
     backend = models.CharField(null=True, blank=True, max_length=10)
     default_language = models.CharField(max_length=3, default='en')
+    is_online = models.BooleanField(default=False)
+    current_channel = models.CharField(null=True, blank=True, max_length=255)
+
+    def get_full_name(self):
+        return super(User, self).get_full_name() or self.email or self.username
 
 
 class Factory(models.Model):
