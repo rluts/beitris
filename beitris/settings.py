@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'django_extensions',
     'channels',
     'corsheaders',
+    'rest_auth',
 
     'common',
     'game',
@@ -146,7 +147,8 @@ MEDIA_URL = 'media/'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ]
 }
 
@@ -174,3 +176,8 @@ CORS_ORIGIN_WHITELIST = [
     "http://localhost:3000",
     "http://127.0.0.1:3000"
 ]
+
+REST_AUTH_SERIALIZERS = {
+    'TOKEN_SERIALIZER': 'common.serializers.TokenSerializer',
+}
+

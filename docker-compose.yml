@@ -40,22 +40,10 @@ services:
     networks:
       - beitris
 
-  channels:
-    build: .
-    command: ["python", "manage.py", "runworker", "websocket"]
-    volumes:
-      - .:/app
-    networks:
-      - beitris
-    depends_on:
-      - redis
-
   redis:
     image: redis
     networks:
       - beitris
-    ports:
-      - 6379:6379
 
   celery:
     build: .
@@ -70,6 +58,7 @@ services:
   frontend:
     build: ./frontend
     command: bash -c 'yarn install && yarn start'
+    stdin_open: true
     environment:
       - NODE_ENV=dev
     depends_on:

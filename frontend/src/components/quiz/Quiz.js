@@ -1,36 +1,11 @@
 import React, {Component} from 'react';
-import {connect} from 'react-redux';
-import classes from './Quiz.module.scss'
-import {ask, check, loadCategoriesAjax, setTitle, skip} from '../../actions'
+import '../../css/styles.scss'
 import CircularProgress from "@material-ui/core/CircularProgress";
 import Grid from '@material-ui/core/Grid';
 import Answer from "./Answer";
 import Categories from "./Categories";
 import Snackbar from "../snackbar/Snackbar";
 
-function mapStateToProps(state) {
-    return state.quiz;
-}
-
-const mapDispatchToProps = dispatch => {
-  return {
-      loadQuiz: (category) => {
-          dispatch(ask(category));
-      },
-      loadCategories: () => {
-          dispatch(loadCategoriesAjax())
-      },
-      checkAnswer: (answer, questionId, category) => {
-          dispatch(check(answer, questionId, category))
-      },
-      setTitle: (text) => {
-          dispatch(setTitle(text))
-      },
-      skipQuestion: (question, category) => {
-          dispatch(skip(question, category))
-      }
-    };
-};
 
 class Quiz extends Component {
 
@@ -72,10 +47,10 @@ class Quiz extends Component {
               direction="column"
               alignItems="center"
               justify="center"
-              style={{ minHeight: '100vh' }}
+              style={{ minHeight: '100vh', paddingTop: 64 }}
             >
                 <Grid item lg={5} md={8} sm={10}>
-                    <div className={classes.Quiz}>
+                    <div className="BeitrisBlock">
                         <h2>{this.props.titleText}</h2>
                         <div>
                             <Categories disabled={!!this.state.loading} category={this.state.category}
@@ -85,7 +60,7 @@ class Quiz extends Component {
                         </div>
                         <div>
                             {this.props.imageUrl && !this.props.loading ?
-                            <img  className={classes.QuizImage} src={this.props.imageUrl} alt={this.props.questionId} />
+                            <img  className="QuizImage" src={this.props.imageUrl} alt={this.props.questionId} />
                             : this.props.loading ? <CircularProgress /> : null
                             }
                         </div>
@@ -98,6 +73,4 @@ class Quiz extends Component {
     }
 }
 
-export default connect(
-    mapStateToProps, mapDispatchToProps
-)(Quiz);
+export default Quiz;

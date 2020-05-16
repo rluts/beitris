@@ -1,0 +1,43 @@
+.BeitrisContainer {
+  & > header {
+    position: absolute;
+    top: 0;
+  }
+  .LoadingBlock {
+    text-align: center;
+    margin-top: 80px;
+  }
+  .BeitrisBlock {
+    border-radius: 14px 14px 14px 14px;
+    border: 6px solid #d6d6d6;
+    color: black;
+    background-color: #ffffff;
+    text-align: center;
+    padding: 20px;
+    header {
+      a {
+        color: white;
+      }
+    }
+    img {
+      border: 1px #ccc solid;
+      margin: 1px;
+    }
+    h3 {
+      color: green;
+      &.notCorrect {
+        color: red;
+      }
+    }
+    .AnswerForm {
+       margin: 10px;
+      display: flex;
+      justify-content: center;
+    }
+    .QuizImage {
+      width: 100%;
+    }
+  }
+}
+
+

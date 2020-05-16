@@ -18,9 +18,13 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
+from common.views import status
+
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('quiz.urls'))
+    path('api/', include('quiz.urls')),
+    path('api/status/', status, name='status'),
+    path('api/auth/', include('rest_auth.urls'))
 ]
 
 if settings.DEBUG:

@@ -68,9 +68,7 @@ class Game:
         if isinstance(user_obj, User):
             return user_obj
 
-        user, created = User.objects.get_or_create(username=user_obj,
-                                                   external_id=user_obj,
-                                                   backend=self.room.backend)
+        user, created = User.objects.get_or_create(username=user_obj)
 
         return user
 
